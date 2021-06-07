@@ -1,0 +1,10 @@
+_rel
+.erlang.mk
+.eunit
+*.o
+*.beam
+*.plt
+erl_crash.dump
+deps
+droneactor.d
+ebin

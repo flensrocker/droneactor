@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "cli": {
+    "defaultCollection": "@nrwl/angular"
+  },
+  "defaultProject": "drone-actor",
+  "schematics": {
+    "@nrwl/angular": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      },
+      "storybook-configuration": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/angular:application": {
+      "style": "css",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/angular:library": {
+      "style": "css",
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    },
+    "@nrwl/angular:component": {
+      "style": "css"
+    }
+  },
+  "projects": {
+    "drone-actor": {
+      "projectType": "application",
+      "root": "apps/drone-actor",
+      "sourceRoot": "apps/drone-actor/src",
+      "prefix": "fest",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/drone-actor",
+            "index": "apps/drone-actor/src/index.html",
+            "main": "apps/drone-actor/src/main.ts",
+            "polyfills": "apps/drone-actor/src/polyfills.ts",
+            "tsConfig": "apps/drone-actor/tsconfig.app.json",
+            "assets": [
+              "apps/drone-actor/src/favicon.ico",
+              "apps/drone-actor/src/assets"
+            ],
+            "styles": ["apps/drone-actor/src/styles.css"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "apps/drone-actor/src/environments/environment.ts",
+                  "with": "apps/drone-actor/src/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "apps/drone-actor/proxy.conf.json"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "drone-actor:build:production"
+            },
+            "development": {
+              "browserTarget": "drone-actor:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "drone-actor:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "apps/drone-actor/src/**/*.ts",
+              "apps/drone-actor/src/**/*.html"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/drone-actor"],
+          "options": {
+            "jestConfig": "apps/drone-actor/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "drone-actor-e2e": {
+      "root": "apps/drone-actor-e2e",
+      "sourceRoot": "apps/drone-actor-e2e/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/drone-actor-e2e/cypress.json",
+            "tsConfig": "apps/drone-actor-e2e/tsconfig.e2e.json",
+            "devServerTarget": "drone-actor:serve:development"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "drone-actor:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/drone-actor-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    }
+  }
+}

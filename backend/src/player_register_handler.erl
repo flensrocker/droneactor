@@ -1,4 +1,4 @@
--module(user_register_handler).
+-module(player_register_handler).
 
 -behaviour(cowboy_handler).
 

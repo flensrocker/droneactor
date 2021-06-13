@@ -9,8 +9,8 @@ start(_Type, _Args) ->
     game_registry:start_link(),
     Dispatch =
         cowboy_router:compile([{'_',
-                                [{"/api/user/register", user_register_handler, #{}},
-                                 {"/api/game/board", game_board_handler, #{}}]}]),
+                                [{"/api/player/register", player_register_handler, #{}},
+                                 {"/api/player/connect", player_socket_handler, #{}}]}]),
     {ok, _} =
         cowboy:start_clear(drone_http_handler, [{port, 8080}], #{env => #{dispatch => Dispatch}}),
     droneactor_sup:start_link().

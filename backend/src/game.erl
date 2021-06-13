@@ -44,9 +44,10 @@ handle_call({join, Player = #{player_id := PlayerId, player_name := PlayerName}}
                 PPs = maps:put(PlayerId, Pid, PlayerPids),
                 S1 = maps:put(players, Ps, State),
                 S2 = maps:put(player_pids, PPs, S1),
-                {x, S2};
+                {Pid, S2};
             true ->
-                {maps:get(PlayerId, PlayerPids), State}
+                Pid = maps:get(PlayerId, PlayerPids),
+                {Pid, State}
         end,
     {reply, {ok, PlayerPid}, State1};
 handle_call(state,
@@ -56,11 +57,8 @@ handle_call(state,
                   size := GameSize,
                   fields := FieldMap,
                   players := PlayerMap}) ->
-    MapField = fun({{Q, R}, _Field}) -> #{<<"coord_q">> => Q, <<"coord_r">> => R} end,
-    FieldList = lists:map(MapField, maps:to_list(FieldMap)),
-    MapPlayer =
-        fun({_PlayerId, #{player_name := PlayerName}}) -> #{<<"player_name">> => PlayerName} end,
-    PlayerList = lists:map(MapPlayer, maps:to_list(PlayerMap)),
+    FieldList = lists:map(fun(F) -> map_field(F) end, maps:to_list(FieldMap)),
+    PlayerList = lists:map(fun(P) -> map_player(P) end, maps:to_list(PlayerMap)),
     GameState =
         #{<<"game_name">> => GameName,
           <<"game_size">> => GameSize,
@@ -72,3 +70,9 @@ handle_call(_Msg, _From, State) ->
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
+map_field({{Q, R}, _Field}) ->
+    #{<<"coord_q">> => Q, <<"coord_r">> => R}.
+
+map_player({_PlayerId, #{player_name := PlayerName}}) ->
+    #{<<"player_name">> => PlayerName}.

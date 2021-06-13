@@ -29,20 +29,19 @@ handle_call({join,
                player_name := PlayerName,
                game_name := GameName}},
             _From,
-            State) ->
-    Games = maps:get(games, State),
+            State = #{games := Games}) ->
     Game = maps:get(GameName, Games, #{name => GameName, size => 3}),
     {GamePid, State1} =
         case maps:is_key(pid, Game) of
             false ->
                 {ok, Pid} = game:start_link(GameName, maps:get(size, Game)),
-                {Pid, State};
-            true ->
-                P = maps:get(pid, Game),
-                G = maps:put(pid, P, Game),
+                G = maps:put(pid, Pid, Game),
                 Gs = maps:put(GameName, G, Games),
                 S = maps:put(games, Gs, State),
-                {P, S}
+                {Pid, S};
+            true ->
+                Pid = maps:get(pid, Game),
+                {Pid, State}
         end,
     game:join_player(GamePid, #{player_id => PlayerId, player_name => PlayerName}),
     Reply = #{game_pid => GamePid},

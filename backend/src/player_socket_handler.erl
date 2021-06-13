@@ -1,4 +1,4 @@
--module(game_board_handler).
+-module(player_socket_handler).
 
 -behaviour(cowboy_websocket).
 
@@ -17,13 +17,14 @@ websocket_init(JoinRequest =
                    #{player_id := _PlayerId,
                      player_name := _PlayerName,
                      game_name := _GameName}) ->
-    {ok, GamePid} = game_registry:join_game(JoinRequest),
+    {ok, #{game_pid := GamePid}} = game_registry:join_game(JoinRequest),
     State = maps:put(game_pid, GamePid, JoinRequest),
     {ok, GameState} = game:get_state(GamePid),
-    {[{text, jsx:encode(GameState)}], State}.
+    {[{text, jsx:encode(#{<<"message">> => <<"game_state">>, <<"payload">> => GameState})}],
+     State}.
 
 websocket_handle(Frame = {text, _}, State) ->
-    {[Frame], State};
+    {reply, [Frame], State};
 websocket_handle(_Frame, State) ->
     {ok, State}.
 

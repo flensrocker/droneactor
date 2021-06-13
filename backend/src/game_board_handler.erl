@@ -13,13 +13,14 @@ init(Req0, _) ->
     JoinRequest = cowboy_req:match_cookies([player_id, player_name, game_name], Req0),
     {cowboy_websocket, Req0, JoinRequest}.
 
-websocket_init(JoinRequest = #{player_id := _PlayerId,
-                 player_name := _PlayerName,
-                 game_name := _GameName}) ->
+websocket_init(JoinRequest =
+                   #{player_id := _PlayerId,
+                     player_name := _PlayerName,
+                     game_name := _GameName}) ->
     {ok, GamePid} = game_registry:join_game(JoinRequest),
     State = maps:put(game_pid, GamePid, JoinRequest),
-    % send game state
-    {ok, State}.
+    {ok, GameState} = game:get_state(GamePid),
+    {[{text, jsx:encode(GameState)}], State}.
 
 websocket_handle(Frame = {text, _}, State) ->
     {[Frame], State};

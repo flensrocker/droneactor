@@ -10,13 +10,21 @@ init(Req0 = #{method := <<"OPTIONS">>}, State) ->
     Req2 = cowboy_req:set_resp_header(<<"access-control-allow-origin">>, <<"*">>, Req1),
     {ok, Req2, State};
 init(Req0, _) ->
-    UserGame = cowboy_req:match_cookies([userid, username, game], Req0),
-    {cowboy_websocket, Req0, UserGame}.
-websocket_init(State) ->
-	{[{text, <<"{\"type\":\"hello\"}">>}], State}.
+    JoinRequest = cowboy_req:match_cookies([player_id, player_name, game_name], Req0),
+    {cowboy_websocket, Req0, JoinRequest}.
+
+websocket_init(JoinRequest = #{player_id := _PlayerId,
+                 player_name := _PlayerName,
+                 game_name := _GameName}) ->
+    {ok, GamePid} = game_registry:join_game(JoinRequest),
+    State = maps:put(game_pid, GamePid, JoinRequest),
+    % send game state
+    {ok, State}.
+
 websocket_handle(Frame = {text, _}, State) ->
-	{[Frame], State};
+    {[Frame], State};
 websocket_handle(_Frame, State) ->
-	{ok, State}.
+    {ok, State}.
+
 websocket_info(_Info, State) ->
-	{ok, State}.
+    {ok, State}.

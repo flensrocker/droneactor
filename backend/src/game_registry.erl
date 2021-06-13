@@ -7,7 +7,7 @@
 -export([join_game/1]).
 
 start_link() ->
-    gen_server:start_link({local, game_registry}, game_registry, #{games => #{}}, []).
+    gen_server:start_link({local, game_registry}, ?MODULE, #{games => #{}}, []).
 
 stop() ->
     gen_server:stop(game_registry).

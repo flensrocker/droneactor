@@ -12,18 +12,18 @@ init(Req0 = #{method := <<"OPTIONS">>}, State) ->
 init(Req0 = #{method := <<"POST">>}, State) ->
     {ok, ReqBody, Req1} = cowboy_req:read_body(Req0),
     ReqData = jsx:decode(ReqBody, [return_maps]),
-    Game = maps:get(<<"game">>, ReqData),
-    Username = maps:get(<<"username">>, ReqData),
-    UserId =
+    GameName = maps:get(<<"game_name">>, ReqData),
+    PlayerName = maps:get(<<"player_name">>, ReqData),
+    PlayerId =
         list_to_binary(uuid:to_string(
                            uuid:uuid4())),
-    Req2 = cowboy_req:set_resp_cookie(<<"userid">>, UserId, Req1, #{path => "/api"}),
-    Req3 = cowboy_req:set_resp_cookie(<<"username">>, Username, Req2, #{path => "/api"}),
-    Req4 = cowboy_req:set_resp_cookie(<<"game">>, Game, Req3, #{path => "/api"}),
+    Req2 = cowboy_req:set_resp_cookie(<<"player_id">>, PlayerId, Req1, #{path => "/api"}),
+    Req3 = cowboy_req:set_resp_cookie(<<"player_name">>, PlayerName, Req2, #{path => "/api"}),
+    Req4 = cowboy_req:set_resp_cookie(<<"game_name">>, GameName, Req3, #{path => "/api"}),
     Reply =
-        #{<<"userId">> => UserId,
-          <<"game">> => Game,
-          <<"username">> => Username},
+        #{<<"player_id">> => PlayerId,
+          <<"player_name">> => PlayerName,
+          <<"game_name">> => GameName},
     Req5 =
         cowboy_req:reply(200,
                          #{<<"content-type">> => <<"application/json">>},

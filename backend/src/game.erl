@@ -10,8 +10,9 @@ start_link(Name, Size) ->
     State =
         #{name => Name,
           size => Size,
-          players => #{}},
-    gen_server:start_link(game, State, []).
+          players => #{},
+          player_pids => #{}},
+    gen_server:start_link(?MODULE, State, []).
 
 stop(GamePid) ->
     gen_server:stop(GamePid).
@@ -22,13 +23,24 @@ join_player(GamePid, Player = #{player_id := _PlayerId, player_name := _PlayerNa
 init(State) ->
     {ok, State}.
 
-handle_call({join, Player = #{player_id := PlayerId, player_name := _PlayerName}},
+handle_call({join, Player = #{player_id := PlayerId, player_name := PlayerName}},
             _From,
             State) ->
     Players = maps:get(players, State),
-    Players1 = maps:put(PlayerId, Player, Players),
-    State1 = maps:put(players, Players1, State),
-    {reply, ok, State1};
+    PlayerPids = maps:get(player_pids, State),
+    {PlayerPid, State1} =
+        case maps:is_key(PlayerId, Players) of
+            false ->
+                {ok, Pid} = player:start_link(PlayerId, PlayerName),
+                Ps = maps:put(PlayerId, Player, Players),
+                PPs = maps:put(PlayerId, Pid, PlayerPids),
+                S1 = maps:put(players, Ps, State),
+                S2 = maps:put(player_pids, PPs, S1),
+                {x, S2};
+            true ->
+                {maps:get(PlayerId, PlayerPids), State}
+        end,
+    {reply, {ok, PlayerPid}, State1};
 handle_call(_Msg, _From, State) ->
     {noreply, State}.
 

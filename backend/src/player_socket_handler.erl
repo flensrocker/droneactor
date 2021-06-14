@@ -17,10 +17,17 @@ websocket_init(JoinRequest =
                    #{player_id := _PlayerId,
                      player_name := _PlayerName,
                      game_name := _GameName}) ->
-    {ok, #{game_pid := GamePid}} = game_registry:join_game(JoinRequest),
-    State = maps:put(game_pid, GamePid, JoinRequest),
+    {JoinState, #{game_pid := GamePid}} = game_registry:join_game(JoinRequest),
+    State = maps:merge(JoinRequest, #{game_pid => GamePid, join_state => JoinState}),
     {ok, GameState} = game:get_state(GamePid),
-    {[{text, jsx:encode(#{<<"message">> => <<"game_state">>, <<"payload">> => GameState})}],
+    GameState1 =
+        case JoinState of
+            ok ->
+                maps:put(<<"join_state">>, <<"player">>, GameState);
+            game_full ->
+                maps:put(<<"join_state">>, <<"viewer">>, GameState)
+        end,
+    {[{text, jsx:encode(#{<<"message">> => <<"game_state">>, <<"payload">> => GameState1})}],
      State}.
 
 websocket_handle(Frame = {text, _}, State) ->

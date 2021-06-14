@@ -1,17 +1,16 @@
--module(player).
+-module(queen).
 
 -behaviour(gen_server).
 
--export([start_link/2, stop/1]).
+-export([start_link/3, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2]).
 
-start_link(PlayerId, PlayerName) ->
-    %% TODO start queen
-    State = #{player_id => PlayerId, player_name => PlayerName},
+start_link(GamePid, PlayerPid, FieldId = {_Q, _R}) ->
+    State = #{game_pid => GamePid, player_pid => PlayerPid, field_id => FieldId},
     gen_server:start_link(?MODULE, State, []).
 
-stop(PlayerPid) ->
-    gen_server:stop(PlayerPid).
+stop(QueenPid) ->
+    gen_server:stop(QueenPid).
 
 init(State) ->
     {ok, State}.

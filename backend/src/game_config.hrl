@@ -1,0 +1,3 @@
+-define(default_game_size, 3).
+-define(max_game_size, 6).
+-define(max_player_count, 3).

@@ -6,6 +6,8 @@
 -export([init/1, handle_call/3, handle_cast/2]).
 -export([join_game/1]).
 
+-include("game_config.hrl").
+
 start_link() ->
     gen_server:start_link({local, game_registry}, ?MODULE, #{games => #{}}, []).
 
@@ -30,7 +32,7 @@ handle_call({join,
                game_name := GameName}},
             _From,
             State = #{games := Games}) ->
-    Game = maps:get(GameName, Games, #{name => GameName, size => 3}),
+    Game = maps:get(GameName, Games, #{name => GameName, size => ?default_game_size}),
     {GamePid, State1} =
         case maps:is_key(pid, Game) of
             false ->
@@ -43,9 +45,15 @@ handle_call({join,
                 Pid = maps:get(pid, Game),
                 {Pid, State}
         end,
-    game:join_player(GamePid, #{player_id => PlayerId, player_name => PlayerName}),
-    Reply = #{game_pid => GamePid},
-    {reply, {ok, Reply}, State1};
+    ReplyBody = #{game_pid => GamePid},
+    Reply =
+        case game:join_player(GamePid, #{player_id => PlayerId, player_name => PlayerName}) of
+            {ok, _PlayerPid} ->
+                {ok, ReplyBody};
+            game_full ->
+                {game_full, ReplyBody}
+        end,
+    {reply, Reply, State1};
 handle_call(_Msg, _From, State) ->
     {noreply, State}.
 

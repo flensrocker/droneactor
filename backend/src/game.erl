@@ -8,7 +8,7 @@
 
 -include("game_config.hrl").
 
-start_link(Name, Size) ->
+start_link(Name, Size) when 0 < Size, Size =< ?max_game_size ->
     State =
         #{name => Name,
           size => Size,
@@ -28,31 +28,45 @@ get_state(GamePid) ->
 
 init(State = #{size := Size}) ->
     C = lists:seq(-Size, Size),
-    FieldList = [{{Q, R}, #{}} || Q <- C, R <- C, hex_coord:len({Q, R}) =< Size],
-    Fields = maps:from_list(FieldList),
-    State1 = maps:put(fields, Fields, State),
+    FieldIds = [{Q, R} || Q <- C, R <- C, hex_coord:len({Q, R}) =< Size],
+    Fields =
+        maps:from_list(
+            lists:map(fun(FieldId) -> {FieldId, #{}} end, FieldIds)),
+    FieldPids =
+        maps:from_list(
+            lists:map(fun(FieldId) ->
+                         {ok, FieldPid} =
+                             field:start_link(
+                                 erlang:self(), FieldId),
+                         {FieldId, FieldPid}
+                      end,
+                      FieldIds)),
+    State1 = maps:merge(State, #{fields => Fields, field_pids => FieldPids}),
     {ok, State1}.
 
 handle_call({join, Player = #{player_id := PlayerId, player_name := PlayerName}},
             _From,
-            State) ->
-    Players = maps:get(players, State),
-    PlayerPids = maps:get(player_pids, State),
+            State =
+                #{players := Players,
+                  player_pids := PlayerPids,
+                  size := GameSize}) ->
     PlayerCount = maps:size(Players),
     {Reply, State1} =
         case maps:is_key(PlayerId, Players) of
             false when PlayerCount =:= ?max_player_count ->
                 {game_full, State};
             false ->
-                {ok, Pid} = player:start_link(PlayerId, PlayerName),
-                Ps = maps:put(PlayerId, Player, Players),
-                PPs = maps:put(PlayerId, Pid, PlayerPids),
-                S1 = maps:put(players, Ps, State),
-                S2 = maps:put(player_pids, PPs, S1),
-                {{ok, Pid}, S2};
+                QueenField = hex_coord:corner_coord(GameSize, PlayerCount),
+                {ok, PlayerPid} =
+                    player:start_link(
+                        erlang:self(), PlayerId, PlayerName, QueenField),
+                Players1 = maps:put(PlayerId, Player, Players),
+                PlayerPids1 = maps:put(PlayerId, PlayerPid, PlayerPids),
+                S1 = maps:merge(State, #{players => Players1, player_pids => PlayerPids1}),
+                {{ok, PlayerPid}, S1};
             true ->
-                Pid = maps:get(PlayerId, PlayerPids),
-                {{ok, Pid}, State}
+                PlayerPid = maps:get(PlayerId, PlayerPids),
+                {{ok, PlayerPid}, State}
         end,
     {reply, Reply, State1};
 handle_call(state,

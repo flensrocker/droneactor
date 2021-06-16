@@ -1,8 +1,11 @@
 -module(player_socket_handler).
 
+-behaviour(gen_event).
 -behaviour(cowboy_websocket).
 
 -export([init/2, websocket_init/1, websocket_handle/2, websocket_info/2]).
+-export([init/1, handle_event/2, handle_call/2]).
+-export([terminate/2]).
 
 init(Req0 = #{method := <<"OPTIONS">>}, State) ->
     Req1 =
@@ -17,8 +20,15 @@ websocket_init(JoinRequest =
                    #{player_id := _PlayerId,
                      player_name := _PlayerName,
                      game_name := _GameName}) ->
-    {JoinState, #{game_pid := GamePid}} = game_registry:join_game(JoinRequest),
-    State = maps:merge(JoinRequest, #{game_pid => GamePid, join_state => JoinState}),
+    {JoinState, #{game_pid := GamePid, event_pid := EventPid}} =
+        game_registry:join_game(JoinRequest),
+    EventRef = erlang:make_ref(),
+    State =
+        maps:merge(JoinRequest,
+                   #{game_pid => GamePid,
+                     event_ref => EventRef,
+                     join_state => JoinState}),
+    gen_event:add_handler(EventPid, {?MODULE, EventRef}, #{socket_pid => erlang:self()}),
     {ok, GameState} = game:get_state(GamePid),
     GameState1 =
         case JoinState of
@@ -35,5 +45,24 @@ websocket_handle(Frame = {text, _}, State) ->
 websocket_handle(_Frame, State) ->
     {ok, State}.
 
+websocket_info(Event = #{<<"message">> := _Msg, <<"payload">> := _Payload}, State) ->
+    {[{text, jsx:encode(Event)}], State};
 websocket_info(_Info, State) ->
     {ok, State}.
+
+init(EventState) ->
+    {ok, EventState}.
+
+handle_event(Event, EventState = #{socket_pid := SocketPid}) ->
+    SocketPid ! Event,
+    {ok, EventState}.
+
+handle_call(_Event, EventState) ->
+    {ok, _Event, EventState}.
+
+terminate(_Reason, State = #{event_pid := EventPid, event_ref := EventRef}) ->
+    gen_event:delete_handler(EventPid, {?MODULE, EventRef}, State),
+    ok;
+terminate(Reason, _EventState = #{socket_pid := SocketPid}) ->
+    SocketPid ! Reason,
+    ok.

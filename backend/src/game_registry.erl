@@ -30,7 +30,7 @@ handle_call({join,
              #{player_id := PlayerId,
                player_name := PlayerName,
                game_name := GameName}},
-            _From,
+            PlayerSocketPid,
             State = #{games := Games}) ->
     Game = maps:get(GameName, Games, #{name => GameName, size => ?default_game_size}),
     {GamePid, State1} =
@@ -47,11 +47,15 @@ handle_call({join,
         end,
     ReplyBody = #{game_pid => GamePid},
     Reply =
-        case game:join_player(GamePid, #{player_id => PlayerId, player_name => PlayerName}) of
-            {ok, _PlayerPid} ->
-                {ok, ReplyBody};
-            game_full ->
-                {game_full, ReplyBody}
+        case game:join_player(GamePid,
+                              #{player_socket_pid => PlayerSocketPid,
+                                player_id => PlayerId,
+                                player_name => PlayerName})
+        of
+            {ok, _PlayerPid, EventPid} ->
+                {ok, maps:put(event_pid, EventPid, ReplyBody)};
+            {game_full, EventPid} ->
+                {game_full, maps:put(event_pid, EventPid, ReplyBody)}
         end,
     {reply, Reply, State1};
 handle_call(_Msg, _From, State) ->

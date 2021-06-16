@@ -2,12 +2,12 @@
 
 -behaviour(gen_server).
 
--export([start_link/2, stop/1]).
+-export([start_link/3, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2]).
 -export([add_queen/2]).
 
-start_link(GamePid, FieldId) ->
-    State = #{game_pid => GamePid, field_id => FieldId},
+start_link(GamePid, EventPid, FieldId) ->
+    State = #{game_pid => GamePid, event_pid => EventPid, field_id => FieldId},
     gen_server:start_link(?MODULE, State, []).
 
 stop(FieldPid) ->

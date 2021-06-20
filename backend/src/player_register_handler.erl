@@ -17,6 +17,7 @@ init(Req0 = #{method := <<"POST">>}, State) ->
     PlayerId =
         list_to_binary(uuid:to_string(
                            uuid:uuid4())),
+    % TODO use jwt for cookie-content
     Req2 = cowboy_req:set_resp_cookie(<<"player_id">>, PlayerId, Req1, #{path => "/api"}),
     Req3 = cowboy_req:set_resp_cookie(<<"player_name">>, PlayerName, Req2, #{path => "/api"}),
     Req4 = cowboy_req:set_resp_cookie(<<"game_name">>, GameName, Req3, #{path => "/api"}),

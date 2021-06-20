@@ -13,6 +13,7 @@ init(Req0 = #{method := <<"OPTIONS">>}, State) ->
     Req2 = cowboy_req:set_resp_header(<<"access-control-allow-origin">>, <<"*">>, Req1),
     {ok, Req2, State};
 init(Req0, _) ->
+    % TODO decode jwt in cookie
     JoinRequest = cowboy_req:match_cookies([player_id, player_name, game_name], Req0),
     {cowboy_websocket, Req0, JoinRequest}.
 

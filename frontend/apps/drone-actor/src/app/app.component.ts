@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { PlayerSocketClient } from './player-socket-client';
 
 @Component({
   selector: 'fest-root',
@@ -7,4 +8,8 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'drone-actor';
+
+  constructor(private _playerSocket: PlayerSocketClient) {
+
+  }
 }

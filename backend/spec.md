@@ -38,7 +38,7 @@ interface SocketMessage<TMessage, TPayload> {
 | --- | --- | --- | --- |
 | game_joined | game_pid, player_id, player_name, player_pid |
 | game_full | game_name |
-| game_state | game.state without pids |
+| game_state_changed | game.state without pids |
 
 ## game_registry
 
@@ -84,7 +84,7 @@ interface SocketMessage<TMessage, TPayload> {
 | receives | payload | sends | remarks |
 | --- | --- | --- | --- |
 | player_joined | player_id, player_name
-| field_state_changed | tick_count, field_id, drones | tick* => all  players | * when all fields reported, timeout = (tick_interval - (current_time - last_tick_time))
+| field_state_changed | tick_count, field_id, drones | tick* => all players; game_state_changed => all player_socket_handlers | * when all fields reported, timeout = (tick_interval - (current_time - last_tick_time))
 | move_started | tick_count, player_id | eval_drones* => all fields | * when all players reported
 | restart_game | player_id | game_restarted* => all players | * when all players want restart
 
@@ -158,6 +158,6 @@ interface SocketMessage<TMessage, TPayload> {
 | --- | --- | --- | --- | --- |
 | tick | tick_count | get_drones => fields in sight; calc_move* => self | drones_on_field, calc_move | * with timeout |
 | drones_on_field | tick_count, field_id, [{player_id, drone_type, count}] | calc_move* => self | drones_on_field, calc_move | * send calc_move without timeout if all fields returned |
-| calc_move | tick_count | start_move => selected field; move_started => player | move_ended, died |
+| calc_move | tick_count | start_move => current field; move_started => player | move_ended, died |
 | move_ended | tick_count, field, new_drone_type | | tick |
 | died | | | | stop self |

@@ -83,6 +83,7 @@ interface SocketMessage<TMessage, TPayload> {
 
 | receives | payload | sends | remarks |
 | --- | --- | --- | --- |
+| player_joined | player_id, player_name
 | field_state_changed | tick_count, field_id, drones | tick* => all  players | * when all fields reported, timeout = (tick_interval - (current_time - last_tick_time))
 | move_started | tick_count, player_id | eval_drones* => all fields | * when all players reported
 | restart_game | player_id | game_restarted* => all players | * when all players want restart

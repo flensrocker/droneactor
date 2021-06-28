@@ -86,6 +86,7 @@ interface SocketMessage<TMessage, TPayload> {
 | player_joined | player_id, player_name
 | field_state_changed | tick_count, field_id, drones | tick* => all players; game_state_changed => all player_socket_handlers | * when all fields reported, timeout = (tick_interval - (current_time - last_tick_time))
 | move_started | tick_count, player_id | eval_drones* => all fields | * when all players reported
+| next_drone_type_changed | player_id, next_drone_type |
 | restart_game | player_id | game_restarted* => all players | * when all players want restart
 
 ## player
@@ -108,6 +109,7 @@ interface SocketMessage<TMessage, TPayload> {
 | --- | --- | --- | --- |
 | tick | tick_count | tick => all drones | create new drone if `ticket_count rem 3 = 0` |
 | move_started | tick_count, drone_id | move_started* => game | * when all drones reported |
+| next_drone_type_changed | next_drone_type | next_drone_type_changed => game |
 | game_restarted | | | kill all drones, reset state |
 
 ## field
@@ -130,7 +132,7 @@ interface SocketMessage<TMessage, TPayload> {
 | get_drones | tick_count | drones_on_field => sender | |
 | start_move | tick_count, target_field, player_id, drone_id, drone_type | drone_moved => target_field | remove drone from state |
 | drone_moved | tick_count, player_id, drone_id, drone_type | | add drone to state |
-| eval_drones | tick_count | move_ended => all drones; field_state_changed => game | |
+| eval_drones | tick_count | move_ended \| died => all drones; field_state_changed => game | |
 | game_restarted | | | clear state
 
 ## drone

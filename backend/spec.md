@@ -140,7 +140,7 @@ interface SocketMessage<TMessage, TPayload> {
 ### State
 - game_pid
 - player_id
-- palyer_pid
+- player_pid
 - drone_type:
   - soldier
   - worker_empty
